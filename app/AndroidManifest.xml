@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.johnwong.danshoumode" android:versionCode="6" android:versionName="1.1.0-preview">
+    <uses-sdk android:minSdkVersion="33" android:targetSdkVersion="35" />
+    <permission android:name="com.johnwong.danshoumode.permission.CONTROL" android:protectionLevel="signature" />
+    <uses-permission android:name="com.johnwong.danshoumode.permission.CONTROL" />
+    <application android:label="伪单手模式" android:theme="@android:style/Theme.Material.Light.NoActionBar"
+        android:description="@string/module_description" android:allowBackup="false" android:supportsRtl="true"
+        android:icon="@mipmap/ic_launcher" android:roundIcon="@mipmap/ic_launcher">
+        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="de.robv.android.xposed.category.MODULE_SETTINGS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+        <activity android:name=".LegacyActivity" android:exported="false" android:label="卢本伟模式" />
+        <service android:name=".HandTileService" android:exported="true" android:label="伪单手模式"
+            android:icon="@drawable/ic_tile_hand" android:permission="android.permission.BIND_QUICK_SETTINGS_TILE">
+            <intent-filter><action android:name="android.service.quicksettings.action.QS_TILE" /></intent-filter>
+            <meta-data android:name="android.service.quicksettings.TOGGLEABLE_TILE" android:value="true" />
+        </service>
+        <activity-alias android:name=".LauncherAlias" android:targetActivity=".MainActivity"
+            android:enabled="true" android:exported="true" android:label="伪单手模式" android:icon="@mipmap/ic_launcher">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+    </application>
+</manifest>

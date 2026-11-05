@@ -1,0 +1,13 @@
+/tools/
+/build/
+/research/
+/dist/
+/module/
+/LSPosed-*.zip
+.env
+.env.*
+password.txt
+*.p12
+*.keystore
+*.idsig
+__pycache__/
