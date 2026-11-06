@@ -8,6 +8,16 @@ public final class Geometry {
         return percent/100f;
     }
 
+    public static float[] inverseHandMatrix(float scale,int left,int top) {
+        return new float[]{1/scale,0,-left/scale,0,1/scale,-top/scale,0,0,1};
+    }
+    /** Aspect-fill in the local coordinates of a shade or overview panel. */
+    public static float[] wallpaperBounds(int imageW,int imageH,int panelW,int panelH) {
+        float zoom=Math.max(panelW/(float)imageW,panelH/(float)imageH);
+        float x=(panelW-imageW*zoom)*.5f, y=(panelH-imageH*zoom)*.5f;
+        return new float[]{x,y,panelW-x,panelH-y};
+    }
+
     public static int[] handFrame(int width,int height,float scale,boolean left) {
         if(width<320||height<=width||!Float.isFinite(scale)||scale<.4f||scale>.85f)throw new IllegalArgumentException("仅支持竖屏等比单手模式");
         int w=Math.round(width*scale),h=Math.round(height*scale);

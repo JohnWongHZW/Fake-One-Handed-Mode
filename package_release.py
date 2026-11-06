@@ -6,7 +6,7 @@ import shutil
 
 ROOT=Path(__file__).resolve().parent
 DIST=ROOT/'dist'
-VERSION='1.1.0-preview'
+VERSION='1.2.0-preview'
 RELEASE=VERSION.removesuffix('-preview')
 apk=DIST/('DanShouMode-'+VERSION+'.apk')
 assert apk.is_file(), 'Run build.py first'
@@ -19,7 +19,7 @@ for p in inputs:
         assert p.stat().st_mtime<=apk.stat().st_mtime, 'APK predates source: '+str(p)
 with zipfile.ZipFile(apk) as z:
     assert z.read('META-INF/xposed/java_init.list').decode().strip()=='com.johnwong.danshoumode.Entry'
-    assert z.read('META-INF/xposed/scope.list').decode().splitlines()==['system']
+    assert z.read('META-INF/xposed/scope.list').decode().splitlines()==['system','com.android.systemui','com.miui.home']
     assert b'minApiVersion=102' in z.read('META-INF/xposed/module.prop')
     assert z.read('res/drawable-nodpi-v4/portrait.webp')==(ROOT/'icon.webp').read_bytes()
     # aapt2 re-encodes PNG losslessly; its bytes need not match the source.

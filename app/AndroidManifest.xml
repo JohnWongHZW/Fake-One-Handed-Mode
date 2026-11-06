@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.johnwong.danshoumode" android:versionCode="6" android:versionName="1.1.0-preview">
+    package="com.johnwong.danshoumode" android:versionCode="7" android:versionName="1.2.0-preview">
     <uses-sdk android:minSdkVersion="33" android:targetSdkVersion="35" />
     <permission android:name="com.johnwong.danshoumode.permission.CONTROL" android:protectionLevel="signature" />
     <uses-permission android:name="com.johnwong.danshoumode.permission.CONTROL" />

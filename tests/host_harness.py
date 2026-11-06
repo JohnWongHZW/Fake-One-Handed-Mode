@@ -110,13 +110,17 @@ exec((ROOT/'tests/hand_fakes.py').read_text(encoding='utf-8'))
 exec((ROOT/'tests/tile_fakes.py').read_text(encoding='utf-8'))
 files['com/johnwong/danshoumode/ControllerTest.java']=files['com/johnwong/danshoumode/ControllerTest.java'].replace(
  'System.out.println("Controller/bootstrap: "+checks', (ROOT/'tests/hand_scenarios.java.txt').read_text(encoding='utf-8')+'\nSystem.out.println("Controller/bootstrap: "+checks')
+# The Android input monitor and broadcasts require a platform process. Exercise the
+# production recognizer and controller; the JVM boundary does not dispatch across apps.
+files['com/johnwong/danshoumode/FrameChannel.java']='package com.johnwong.danshoumode;class FrameChannel{static void serve(android.content.Context c,android.os.Handler h,Controller v){} static void publish(android.content.Context c,Controller v){}}'
+files['com/johnwong/danshoumode/BarMonitor.java']='package com.johnwong.danshoumode;class BarMonitor{static void install(android.content.Context c,Object wm,ClassLoader l,Controller v){}}'
 for name,content in files.items():
     p=SRC/name;p.parent.mkdir(parents=True,exist_ok=True);p.write_text(content,encoding='utf-8')
 java_home=Path(os.environ.get('JAVA_HOME',r'D:\Java\17'))
 def tool(n):
     p=java_home/'bin'/(n+('.exe' if os.name=='nt' else ''))
     return str(p) if p.exists() else n
-sources=[SRC/name for name in files]+[ROOT/'src/com/johnwong/danshoumode'/n for n in ['Controller.java','Geometry.java','Protocol.java','Reflect.java','Bootstrap.java','HandSettings.java','HandSurface.java','BlankDecor.java','OutsideTap.java','HandTileService.java','Diagnostics.java']]
+sources=[SRC/name for name in files]+[ROOT/'src/com/johnwong/danshoumode'/n for n in ['Controller.java','Geometry.java','Protocol.java','Reflect.java','Bootstrap.java','HandSettings.java','HandSurface.java','BlankDecor.java','BarSwipe.java','OutsideTap.java','HandTileService.java','Diagnostics.java']]
 subprocess.run([tool('javac'),'-encoding','UTF-8','--release','8','-d',str(OUT),*map(str,sources)],check=True)
 subprocess.run([tool('java'),'-Dtest.root='+str(BASE),'-cp',str(OUT),'com.johnwong.danshoumode.ControllerTest'],check=True)
 subprocess.run([tool('java'),'-cp',str(OUT),'com.johnwong.danshoumode.TileTest'],check=True)

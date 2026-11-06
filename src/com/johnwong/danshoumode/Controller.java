@@ -33,7 +33,7 @@ final class Controller {
     private Properties saved;
     private boolean ready, failed, initialized;
     private String message = "等待系统启动";
-    private long expires, keyStart,lastSettingsOpen;
+    private long expires, keyStart;
     private int keys;
     volatile boolean active;
     volatile int mode; // 0 off, 1 one-handed, 2 legacy
@@ -91,6 +91,7 @@ final class Controller {
             if(updating)try{handSurface.update(before);}catch(Throwable rollback){stop("比例恢复失败，已退出单手模式");Entry.log(rollback);}
             throw t;
         }
+        if(updating) notifyFrame();
         message=updating?"比例已更新，当前小窗即时生效":"配置已保存，快捷开关将使用此配置";
         Diagnostics.add("单手配置已保存："+(next.left?"左手":"右手")+" "+next.percent+"%");
     }
@@ -141,6 +142,9 @@ final class Controller {
                     }
                 }
             }, safety, null, handler, Context.RECEIVER_EXPORTED);
+            try { FrameChannel.serve(context, handler, this); } catch (Throwable t) { Entry.log(t); }
+            if (handReady) try { BarMonitor.install(context, windowManager, loader, this); }
+            catch (Throwable t) { Diagnostics.add("导航手势不可用：" + Diagnostics.concise(t)); }
             handler.post(tick);
         } catch (Throwable t) { ready = false; Entry.log(t); }
     }
@@ -184,6 +188,7 @@ final class Controller {
             projections = 0; viewports = 0; keys = 0;
             synchronized (sync) { mode = 2; active = true; }
             refreshDisplay();
+            notifyFrame();
             message = "已开启 · 再点切换可恢复";
             handler.postDelayed(() -> {
                 if (isLegacy() && (projections == 0 || viewports == 0)) fail(new IllegalStateException("未收到显示或触控更新"));
@@ -194,14 +199,21 @@ final class Controller {
     boolean isHand(){return active && mode==1;}
     boolean isLegacy(){return active && mode==2;}
     void exitFromOutside(){handler.post(()->{if(isHand())stop("双击空白区域，已退出单手模式");});}
-    void openSettings(){handler.post(()->{
-        if(!isHand()||!context.getSystemService(PowerManager.class).isInteractive()||context.getSystemService(KeyguardManager.class).isKeyguardLocked())return;
-        long now=SystemClock.elapsedRealtime();if(now-lastSettingsOpen<700)return;lastSettingsOpen=now;
-        try{context.startActivity(new Intent(Intent.ACTION_MAIN).setClassName(Protocol.PACKAGE,Protocol.PACKAGE+".MainActivity")
-                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_ACTIVITY_CLEAR_TOP));}
-        catch(Throwable t){message="打开模块设置失败："+Diagnostics.concise(t);Entry.log(t);}
-    });}
-    private void enableHand() {
+    void barSwipe(boolean exiting, boolean left, int expectedGeneration) {
+        handler.post(() -> {
+            if (expectedGeneration != handSurface.generation() || isLegacy()) return;
+            try {
+                if (exiting && isHand()) stop("已通过小白条退出单手模式");
+                else if (!exiting && !active) {
+                    HandSettings selected = handSettings.copy();
+                    selected.left = left;
+                    enableHand(selected);
+                }
+            } catch (Throwable error) { message="导航手势失败：" + Diagnostics.concise(error); Entry.log(error); }
+        });
+    }
+    private void enableHand() { enableHand(handSettings); }
+    private void enableHand(HandSettings selected) {
         if(!ready||failed||!handReady)throw new IllegalStateException("单手窗口接口尚未就绪，请查看日志");
         if(!context.getSystemService(PowerManager.class).isInteractive()||context.getSystemService(KeyguardManager.class).isKeyguardLocked())
             throw new IllegalStateException("请先解锁手机");
@@ -209,13 +221,19 @@ final class Controller {
         // A true portrait window keeps status/navigation/keyboard under the same scale.
         try {
             outsideTap.register(windowManager,loader,this,context);
-            handSurface.start(windowManager,handSettings,context.getResources().getDisplayMetrics().density);
+            handSurface.start(windowManager,selected,context.getResources().getDisplayMetrics().density);
+            if(selected.left != handSettings.left) handSettings.save(selected);
             mode=1;active=true;keys=0;expires=SystemClock.elapsedRealtime()+MAX_SESSION_MS;
+            notifyFrame();
             message="单手模式已开启 · 双击空白处任意位置退出";
             Diagnostics.add("单手模式开启；"+(handSettings.left?"左手":"右手")+"；"+handSettings.percent+"%");
         } catch(Throwable t){stop("单手模式开启失败");throw new IllegalStateException(t);}
     }
 
+    private void notifyFrame() {
+        try { FrameChannel.publish(context, this); } catch (Throwable error) { Entry.log(error); }
+    }
+    float activeHandScale() { return handSettings.scale(); }
     private void refreshDisplay() {
         // Neither wm size/density nor persisted rotation settings are written.
         Reflect.callMethod(windowManager, "updateRotation", false, true);
@@ -225,6 +243,7 @@ final class Controller {
     private void stop(String reason) {
         boolean changed;
         synchronized (sync) { changed = active; active = false; mode = 0; }
+        if(changed) notifyFrame();
         keys = 0; message = reason;
         try { outsideTap.unregister(); } catch(Throwable t){Entry.log(t);}
         try { handSurface.stop(); } catch(Throwable t){failed=true;message="显示恢复待重试，请熄屏；若仍异常请重启";Entry.log(t);}

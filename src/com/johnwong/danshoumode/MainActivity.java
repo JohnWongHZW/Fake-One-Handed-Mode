@@ -73,7 +73,7 @@ public final class MainActivity extends Activity {
         LinearLayout extra=row();extra.setPadding(dp(16),dp(12),dp(16),dp(12));extra.setBackground(shape(surface,24));
         ImageView oldIcon=new ImageView(this);oldIcon.setImageResource(res("portrait","drawable"));oldIcon.setScaleType(ImageView.ScaleType.CENTER_CROP);oldIcon.setBackground(shape(container,14));oldIcon.setClipToOutline(true);extra.addView(oldIcon,new LinearLayout.LayoutParams(dp(44),dp(44)));
         LinearLayout caption=vertical();caption.setPadding(dp(12),0,0,0);caption.addView(label("卢本伟模式",17,ink));caption.addView(label("（作者的妙妙小功能）",12,sub));extra.addView(caption,new LinearLayout.LayoutParams(0,-2,1));extra.addView(label("›",26,sub));extra.setOnClickListener(v->startActivity(new Intent(this,LegacyActivity.class)));page.addView(extra);
-        space(page,18);TextView footer=label("1.1.0 预览版 · libxposed API 102",12,sub);footer.setGravity(Gravity.CENTER);page.addView(footer);
+        space(page,18);TextView footer=label("1.2.0 预览版 · libxposed API 102",12,sub);footer.setGravity(Gravity.CENTER);page.addView(footer);
         setContentView(scroll);getWindow().getDecorView().setSystemUiVisibility(dark?0:View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR|View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR);renderSelection();
     }
     private void choose(boolean handLeft){left=handLeft;changed();}
@@ -127,9 +127,9 @@ public final class MainActivity extends Activity {
     }
     private void showHelp(){
         new AlertDialog.Builder(this).setTitle("使用教程").setMessage(
-                "开启单手模式\n竖屏时选择左手或右手、设置缩放比例，再点「开启单手模式」。完整界面会等比缩到对应的下角。\n\n"+
+                "开启单手模式\n在 LSPosed 勾选系统框架、系统界面和小米桌面，重启后使用。竖屏时选择左手或右手、设置缩放比例，再点「开启单手模式」。完整界面会等比缩到对应的下角。\n\n"+
                 "比例与快捷开关\n提供 60%、70%、80% 预设，也可输入 40%–85% 的自定义比例，无需屏幕英寸或校准。运行中调整比例和左右手会直接生效；配置自动保存，控制中心开关使用已保存的配置。\n\n"+
-                "空白区设置\n点空白区的「设置」可直接打开模块，隐藏桌面图标后仍可使用，小窗保持开启。\n\n"+
+                "小白条手势\n解锁并使用手势导航时，从底部左半侧或右半侧向下滑，进入对应下角。开启后，从小窗底部向上滑即可退出。\n\n"+
                 "退出与恢复\n双击小窗外空白处，或再次点首页按钮、控制中心开关即可退出。单手模式熄屏时退出，单次最多运行 2 小时，重启后默认关闭。\n\n"+
                 "操作异常时\n2 秒内连按 3 次音量减，或点击下方「退出并恢复」。若手机完全无响应，请强制重启；仍有问题可在首页查看并复制日志。\n\n"+
                 "隐藏桌面图标\n隐藏后仍可从 LSP 的模块设置打开应用，快捷开关也可继续使用。")

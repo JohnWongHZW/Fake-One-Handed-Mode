@@ -29,7 +29,7 @@ def run(*args):
             x = x.relative_to(ROOT)
         argv.append(str(x))
     subprocess.run(argv, check=True)
-VERSION = '1.1.0-preview'
+VERSION = '1.2.0-preview'
 API = ROOT / 'tools/libxposed-api-102.jar'
 BUILD = ROOT / 'build' / VERSION
 for path in [BUILD / 'classes', BUILD / 'dex', BUILD / 'tests', ROOT / 'dist', ROOT / 'app/assets']:
@@ -78,7 +78,7 @@ with zipfile.ZipFile(apk) as z:
     assert z.read('META-INF/xposed/java_init.list').decode().strip() == 'com.johnwong.danshoumode.Entry'
     assert z.read('META-INF/xposed/module.prop').decode().find('minApiVersion=102') >= 0
     # Modern API distinguishes system_server (system) from system UI dialogs (android).
-    assert z.read('META-INF/xposed/scope.list').decode().splitlines() == ['system']
+    assert z.read('META-INF/xposed/scope.list').decode().splitlines() == ['system','com.android.systemui','com.miui.home']
     assert 'assets/xposed_init' not in z.namelist()
     assert 'classes.dex' in z.namelist()
 digest = hashlib.sha256(apk.read_bytes()).hexdigest()

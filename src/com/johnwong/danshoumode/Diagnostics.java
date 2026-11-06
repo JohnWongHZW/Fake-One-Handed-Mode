@@ -18,7 +18,7 @@ final class Diagnostics {
         }
     }
     static synchronized String report() {
-        return "伪单手模式 1.1.0-preview / libxposed API 102\n"+
+        return "伪单手模式 1.2.0-preview / libxposed API 102\n"+
                 "Device: "+Build.MANUFACTURER+" "+Build.MODEL+"\nAndroid: "+Build.VERSION.RELEASE+
                 " SDK "+Build.VERSION.SDK_INT+"\nBuild: "+Build.DISPLAY+"\n"+
                 "Hooks ready: "+Entry.hooksReady+"; hand hooks: "+Entry.handHooksReady+"\n"+events;

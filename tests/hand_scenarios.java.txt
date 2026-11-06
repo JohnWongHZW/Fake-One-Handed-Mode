@@ -12,7 +12,7 @@ check(Math.abs(leash.scale-.6f)<.00001&&leash.x>0&&leash.y>0,"default right-hand
 check(original.scale==1&&original.radius==11&&original.x==3,"original layer properties preserved");
 check(leash.crop.right==1440&&leash.crop.bottom==3200&&leash.radius==84,"full content crop with source-space rounded corners");
 android.view.Surface decoration=android.view.Surface.created.get(android.view.Surface.created.size()-1);
-check(decoration.posted&&decoration.canvas.texts.contains("双击空白处任意位置退出")&&decoration.canvas.texts.contains("设置"),"blank decoration contains exit hint and settings label");
+check(decoration.posted&&decoration.canvas.texts.contains("双击空白处任意位置退出")&&!decoration.canvas.texts.contains("设置"),"blank decoration contains exit hint only");
 check(decoration.control.parent==parent&&decoration.control.layer>leash.layer&&decoration.control.y>=0&&decoration.control.y+decoration.control.bufferHeight<=f.c.handSurface.frame()[1],"decoration is a visible sibling entirely above the scaled content");
 Handler.advance(25000);check(f.c.isHand()&&f.ctx.audio.volume==7,"one-handed mode remains active with unchanged media volume");
 WindowManagerGlobal.wm.event(0,1000,2500,0,1);WindowManagerGlobal.wm.event(1,1000,2500,100,1);Handler.advance(0);
@@ -59,10 +59,6 @@ check(f.c.isLegacy()&&f.ctx.audio.volume==0,"editing one-handed preferences does
 // Double-tap gesture boundaries, settings launch, and resize must not produce accidental exits.
 f=new Fixture(true);f.op("hand_toggle");leash=WindowManagerGlobal.wm.dc.getWindowingLayer().parent;
 decoration=android.view.Surface.created.get(android.view.Surface.created.size()-1);
-float settingsX=720,settingsY=decoration.control.y+decoration.control.bufferHeight*.64f;
-WindowManagerGlobal.wm.event(0,settingsX,settingsY,0,1);WindowManagerGlobal.wm.event(1,settingsX,settingsY,70,1);Handler.advance(0);
-check(f.ctx.launches==1&&f.c.isHand()&&WindowManagerGlobal.wm.dc.getWindowingLayer().parent==leash,"settings tap opens module while keeping scaled content active");
-check((Protocol.PACKAGE+".MainActivity").equals(f.ctx.launched.componentClass)&&(f.ctx.launched.flags&Intent.FLAG_ACTIVITY_NEW_TASK)!=0,"settings opens explicit main activity independently of launcher alias");
 WindowManagerGlobal.wm.event(0,100,100,1000,1);WindowManagerGlobal.wm.event(1,100,100,1050,1);
 WindowManagerGlobal.wm.event(0,100,100,1400,1);WindowManagerGlobal.wm.event(1,100,100,1450,1);Handler.advance(0);
 check(f.c.isHand(),"two slow blank taps do not exit");
@@ -75,8 +71,6 @@ f.c.command(new Intent().putExtra("op","save_hand").putExtra("percent",85));
 WindowManagerGlobal.wm.event(0,1300,100,1900,1);WindowManagerGlobal.wm.event(1,1300,100,1950,1);Handler.advance(0);
 check(f.c.isHand(),"resize invalidates pending blank tap");
 check(decoration.control.y>=0&&decoration.control.y+decoration.control.bufferHeight<=f.c.handSurface.frame()[1],"decoration remains in blank space at maximum custom percentage");
-settingsY=decoration.control.y+decoration.control.bufferHeight*.64f;
-check(f.c.handSurface.settingsAt(settingsX,settingsY)&&!f.c.handSurface.inside(settingsX,settingsY),"settings hit target moves with current blank-area decoration");
 WindowManagerGlobal.wm.event(0,1300,100,2050,1);WindowManagerGlobal.wm.event(2,1250,100,2080,1);WindowManagerGlobal.wm.event(1,1300,100,2100,1);Handler.advance(0);
 check(f.c.isHand(),"dragged second tap cancels pending double tap");
 WindowManagerGlobal.wm.event(0,100,100,2200,1);WindowManagerGlobal.wm.event(1,100,100,2600,1);
@@ -120,3 +114,20 @@ f.op("hand_toggle");android.view.SurfaceControl handLeash=WindowManagerGlobal.wm
 Diagnostics.add("sentinel hand event");f.ctx.send(Protocol.ACTION,"clear_logs");
 check(f.c.isHand()&&f.ctx.audio.volume==7&&WindowManagerGlobal.wm.dc.getWindowingLayer().parent==handLeash&&!Diagnostics.report().contains("sentinel hand event"),"clearing logs keeps hand surface and touch monitor active");
 f.op("stop");
+
+f=new Fixture(true);int gen=f.c.handSurface.generation();
+f.c.barSwipe(false,true,gen);Handler.advance(0);
+check(f.c.isHand()&&f.c.handSurface.frame()[0]==0,"navigation gesture enters left corner");
+f.c.barSwipe(true,false,gen);Handler.advance(0);check(f.c.isHand(),"stale exit gesture ignored");
+f.c.barSwipe(true,false,f.c.handSurface.generation());Handler.advance(0);check(!f.c.active,"upward gesture exits active small window");
+f.start();f.c.barSwipe(false,false,f.c.handSurface.generation());Handler.advance(0);
+check(f.c.isLegacy()&&f.ctx.audio.volume==0,"navigation gesture preserves legacy mode");f.op("stop");
+BarSwipe bar=new BarSwipe();int[] screen={0,0,1200,2608};
+bar.begin(800,2564,0,screen,60,18,false);check(bar.move(801,2588,60)&&bar.finish(802,2592,90)==2,"right navigation stroke");
+bar.begin(140,2564,0,screen,60,18,false);check(bar.move(145,2588,60)&&bar.finish(145,2592,90)==1,"left navigation stroke");
+bar.begin(140,2564,0,screen,60,18,false);check(!bar.move(190,2570,60)&&bar.finish(195,2592,90)==0,"horizontal gesture ignored");
+bar.begin(140,2500,0,screen,60,18,false);check(!bar.move(145,2540,60)&&bar.finish(145,2550,90)==0,"touch above navigation strip ignored");
+int[] small={240,522,1200,2608};
+bar.begin(720,2590,0,small,40,18,true);check(bar.move(718,2560,65)&&bar.finish(718,2540,90)==3,"upward stroke in scaled navigation strip exits");
+bar.begin(50,2590,0,small,40,18,true);check(!bar.move(50,2560,65)&&bar.finish(50,2540,90)==0,"exit ignores blank side");
+bar.begin(720,2590,0,small,40,18,true);bar.cancel();check(bar.finish(720,2540,90)==0,"cancelled gesture ignored");

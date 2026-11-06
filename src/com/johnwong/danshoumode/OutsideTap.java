@@ -34,13 +34,12 @@ final class OutsideTap {
                 if(generation!=currentGeneration){reset();generation=currentGeneration;}
                 if(e.getActionMasked()==MotionEvent.ACTION_DOWN) {
                     downX=e.getX();downY=e.getY();downTime=e.getEventTime();
-                    region=controller.handSurface.inside(downX,downY)?0:controller.handSurface.settingsAt(downX,downY)?2:1;
+                    region=controller.handSurface.inside(downX,downY)?0:1;
                     secondTap=region==1&&lastUp>=0&&downTime-lastUp>=0&&downTime-lastUp<=doubleTimeout&&distance2(downX,downY,lastX,lastY)<=doubleSlop2;
                     if(!secondTap)lastUp=-1;
                 }else if(e.getActionMasked()==MotionEvent.ACTION_UP) {
                     boolean tap=e.getEventTime()-downTime>=0&&e.getEventTime()-downTime<tapTimeout&&distance2(e.getX(),e.getY(),downX,downY)<=touchSlop2;
-                    if(tap&&region==2&&controller.handSurface.settingsAt(e.getX(),e.getY())){reset();controller.openSettings();}
-                    else if(tap&&region==1&&!controller.handSurface.inside(e.getX(),e.getY())&&!controller.handSurface.settingsAt(e.getX(),e.getY())){
+                    if(tap&&region==1&&!controller.handSurface.inside(e.getX(),e.getY())){
                         if(secondTap){reset();controller.exitFromOutside();}
                         else{lastUp=e.getEventTime();lastX=e.getX();lastY=e.getY();region=0;}
                     }else reset();

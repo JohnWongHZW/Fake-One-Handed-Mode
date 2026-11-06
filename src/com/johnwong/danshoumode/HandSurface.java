@@ -44,19 +44,18 @@ final class HandSurface {
             Reflect.callMethod(builder,"setName","伪单手模式容器");Reflect.callMethod(builder,"setContainerLayer");
             Reflect.callMethod(builder,"setParent",parent);
             leash=(SurfaceControl)Reflect.callMethod(builder,"build");
-            try{decor.create(wm,parent,width,height,density);}catch(Throwable t){Diagnostics.add("提示与设置入口暂不可用："+Diagnostics.concise(t));}
+            try{decor.create(wm,parent,width,height,density);}catch(Throwable t){Diagnostics.add("退出提示暂不可用："+Diagnostics.concise(t));}
             try(SurfaceControl.Transaction t=new SurfaceControl.Transaction()) {
                 t.setLayer(leash,layer).reparent(windowing,leash);Reflect.callMethod(t,"show",leash);
                 setTransform(t,next);decor.place(t,next.frame[1],layer+1);t.apply();placement=next;generation++;
             }catch(Throwable error){stop();throw new IllegalStateException(error);}
         }
     }
-    int[] frame(){return placement.frame.clone();}
+    int[] frame(){Placement p=placement;return p==null?null:p.frame.clone();}
     int generation(){return generation;}
     int rotation(){return rotation;}
     boolean needsRestore(){return leash!=null;}
     boolean inside(float x,float y){Placement p=placement;return p!=null&&Geometry.insideRounded(x,y,p.frame,p.radius);}
-    boolean settingsAt(float x,float y){Placement p=placement;return p!=null&&decor.buttonAt(x,y,p.frame[1]);}
     boolean owns(Object dc){return leash!=null&&dc==displayContent;}
     private void setTransform(SurfaceControl.Transaction t,Placement p) {
         Reflect.callMethod(t,"setMatrix",leash,p.scale,0f,0f,p.scale);t.setPosition(leash,p.frame[0],p.frame[1]);

@@ -27,6 +27,7 @@ public Builder setParent(SurfaceControl p){s.parent=p;return this;}public Surfac
 public static class Transaction implements AutoCloseable {
 List<Runnable> work=new ArrayList<>();public Transaction setLayer(SurfaceControl s,int n){work.add(()->s.layer=n);return this;}
 public Transaction reparent(SurfaceControl s,SurfaceControl p){work.add(()->s.parent=p);return this;}
+public Transaction setTrustedOverlay(SurfaceControl s,boolean trusted){return this;}
 public Transaction show(SurfaceControl s){work.add(()->s.shown=true);return this;}
 public Transaction setMatrix(SurfaceControl s,float a,float b,float c,float d){if(a!=d||b!=0||c!=0)throw new AssertionError("nonuniform transform");work.add(()->s.scale=a);return this;}
 public Transaction setPosition(SurfaceControl s,float x,float y){work.add(()->{s.x=x;s.y=y;});return this;}

@@ -32,6 +32,16 @@ public final class GeometryTest {
         }
         for(int[] panel:devices)for(int percent:new int[]{40,53,60,70,80,85})for(boolean left:new boolean[]{false,true}){
             float scale=Geometry.percentScale(percent);int[] r=Geometry.handFrame(panel[0],panel[1],scale,left);
+            float[] inv=Geometry.inverseHandMatrix(scale,r[0],r[1]);
+            float px=r[0]+panel[0]*.31f*scale,py=r[1]+panel[1]*.79f*scale;
+            check(Math.abs(inv[0]*px+inv[2]-panel[0]*.31f)<.001f &&
+                    Math.abs(inv[4]*py+inv[5]-panel[1]*.79f)<.001f,"vendor input maps physical point to task coordinates");
+            for(int[] image:new int[][]{{64,29},{29,64},{64,64}}){
+                int w=r[2]-r[0],h=r[3]-r[1];
+                float[] fill=Geometry.wallpaperBounds(image[0],image[1],w,h);
+                check(fill[0]<=.001f && fill[1]<=.001f && fill[2]>=w-.001f && fill[3]>=h-.001f,"blurred wallpaper covers all four local panel edges");
+                check(Math.abs((fill[2]-fill[0])/image[0]-(fill[3]-fill[1])/image[1])<.001f,"wallpaper aspect ratio retained");
+            }
             check(r[3]==panel[1]&&(left?r[0]==0:r[2]==panel[0]),"bottom corner anchor");
             check(Math.abs((r[2]-r[0])/(float)panel[0]-(r[3]-r[1])/(float)panel[1])<.002,"one hand uniform scale");
             check(Geometry.insideRounded((r[0]+r[2])/2f,(r[1]+r[3])/2f,r,40),"center interactive");

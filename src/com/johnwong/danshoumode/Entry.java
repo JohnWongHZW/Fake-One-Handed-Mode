@@ -28,6 +28,32 @@ public final class Entry extends XposedModule {
                 " ("+getFrameworkVersionCode()+") API "+getApiVersion()+"; process="+p.getProcessName());
         log(Log.INFO,"伪单手模式","Modern API module loaded; systemServer="+p.isSystemServer());
     }
+    private boolean clientInstalled;
+    @Override public synchronized void onPackageReady(PackageReadyParam p) {
+        String pkg=p.getPackageName();
+        if(clientInstalled || android.os.Process.myUid()/100000!=0 || !(FrameChannel.UI.equals(pkg) || FrameChannel.HOME.equals(pkg)) ||
+                !pkg.equals(android.app.Application.getProcessName())) return;
+        clientInstalled=true;
+        if(FrameChannel.UI.equals(pkg) && android.os.Build.VERSION.SDK_INT>=37 &&
+                ("Xiaomi".equalsIgnoreCase(android.os.Build.MANUFACTURER) || "Redmi".equalsIgnoreCase(android.os.Build.BRAND) || "POCO".equalsIgnoreCase(android.os.Build.BRAND))) {
+            try {
+                new FreeformInput().attach(this,p.getClassLoader());
+                log(Log.INFO,"伪单手模式","已初始化小米自由小窗适配");
+            } catch(Exception|LinkageError e){ log(e); }
+        }
+        try {
+            hook(android.app.Instrumentation.class.getDeclaredMethod("callApplicationOnCreate",android.app.Application.class))
+                    .setExceptionMode(ExceptionMode.PROTECTIVE).intercept(chain->{
+                android.app.Application app=(android.app.Application)chain.getArg(0);
+                if(pkg.equals(app.getPackageName())) try {
+                    if(FrameChannel.UI.equals(pkg)) FreeformInput.clientApp=app;
+                    new Backdrop(this,app).start();
+                }
+                catch(RuntimeException e){ log(e); }
+                return chain.proceed();
+            });
+        } catch(Exception e){log(e);}
+    }
     @Override public synchronized void onSystemServerStarting(SystemServerStartingParam p) {
         if(installed)return;installed=true;
         ClassLoader loader=p.getClassLoader();
